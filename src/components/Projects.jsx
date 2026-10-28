@@ -1,85 +1,288 @@
-import { useState } from 'react';
-import { projectsData } from '../data/portfolioData';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, X } from "lucide-react";
+import { projectsData } from "../data/portfolioData";
+import {
+  WashiTape,
+  BurstBadge,
+  SparkleStar,
+  Starburst,
+  DotMatrix,
+  UnderlineSquiggle
+} from "./Decorative";
 
-export default function Projects() {
-  const [filter, setFilter] = useState('All');
+const containerVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
-  const categories = ['All', 'Web App', 'Full Stack', 'Creative Tech'];
+const cardVariants = {
+  hidden: { y: 40, opacity: 0 },
+  show: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+  }
+};
 
-  const filteredProjects = filter === 'All'
-    ? projectsData
-    : projectsData.filter((p) => p.category === filter);
+function ProjectCard({ project, index, onOpen }) {
+  const isEven = index % 2 === 0;
 
   return (
-    <section className="section-padding" id="projects">
-      <div className="container">
-        <div className="section-header">
-          <span className="section-tag">Portfolio</span>
-          <h2 className="section-title">Featured <span className="text-gradient">Projects & Works</span></h2>
-          <p className="section-description">
-            Selected projects demonstrating architecture, frontend performance, and full-stack integration.
-          </p>
+    <motion.button
+      type="button"
+      onClick={() => onOpen(project)}
+      data-cursor="grow"
+      variants={cardVariants}
+      whileHover={{ rotate: 0, y: -8, scale: 1.03 }}
+      transition={{ type: "spring", stiffness: 260, damping: 18 }}
+      className={`group relative block w-full text-left rounded-3xl border-2 border-dashed border-[rgba(245,244,252,0.15)] bg-[var(--color-canvas-raised)] p-3 shadow-[6px_8px_0_0_oklch(0.10_0.03_290)] ${project.rotate} cursor-pointer`}
+    >
+      {/* Top Washi Tape Sticker */}
+      <WashiTape
+        color={`var(${project.accent})`}
+        className={`absolute -top-3 z-10 ${
+          isEven ? "left-6 -rotate-8" : "right-6 rotate-6"
+        }`}
+      />
+
+      {/* NEW Badge on First Project */}
+      {project.badge && (
+        <BurstBadge
+          color="var(--color-accent)"
+          className="absolute -right-4 -top-4 z-10 h-12 w-12 rotate-6 text-[10px] drop-shadow-md"
+        >
+          {project.badge}
+        </BurstBadge>
+      )}
+
+      {/* Artwork Thumbnail */}
+      <div className="overflow-hidden rounded-2xl bg-black">
+        <img
+          src={project.img}
+          alt={`${project.title} preview`}
+          className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+      </div>
+
+      {/* Card Info */}
+      <div className="px-1 pb-1 pt-4">
+        <span
+          className="inline-block rounded-full px-3 py-1 text-xs font-bold text-[var(--color-canvas)]"
+          style={{ backgroundColor: `var(${project.accent})` }}
+        >
+          {project.tag}
+        </span>
+        <h3 className="mt-3 font-display text-xl font-extrabold tracking-tight text-[var(--color-ink)]">
+          {project.title}
+        </h3>
+      </div>
+
+      {/* Corner Sparkle on Hover */}
+      <SparkleStar className="pointer-events-none absolute -right-2 -top-2 h-5 w-5 text-[var(--color-gold)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+    </motion.button>
+  );
+}
+
+export default function Projects() {
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showAllModal, setShowAllModal] = useState(false);
+
+  // Close modals on Escape key & manage scroll lock
+  useEffect(() => {
+    if (!selectedProject && !showAllModal) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (selectedProject) setSelectedProject(null);
+        else setShowAllModal(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [selectedProject, showAllModal]);
+
+  // Listen to remote "open-all-projects" custom event
+  useEffect(() => {
+    const handleOpenAll = () => setShowAllModal(true);
+    window.addEventListener("open-all-projects", handleOpenAll);
+    return () => window.removeEventListener("open-all-projects", handleOpenAll);
+  }, []);
+
+  return (
+    <section id="projects" className="relative overflow-hidden px-6 py-20 md:px-12">
+      {/* Background vectors */}
+      <DotMatrix className="pointer-events-none absolute right-4 top-2 h-24 w-40 text-[var(--color-coral)] opacity-25 md:right-14" />
+      <Starburst className="pointer-events-none absolute left-[3%] top-24 h-7 w-7 text-[var(--color-cyan)] opacity-70" />
+
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="font-display text-sm font-extrabold uppercase tracking-widest text-[var(--color-accent)]">
+              ◉ Featured Work
+            </p>
+            <h2 className="relative mt-2 inline-block font-display text-3xl font-extrabold tracking-tight text-[var(--color-ink)] md:text-4xl">
+              Stuff I’m proud to show off
+              <UnderlineSquiggle className="absolute -bottom-2 left-0 h-3 w-full text-[var(--color-coral)]" />
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowAllModal(true)}
+            data-cursor="grow"
+            className="group relative flex items-center gap-1.5 font-display text-sm font-extrabold text-[rgba(245,244,252,0.85)] transition-colors hover:text-[var(--color-accent)]"
+          >
+            <span>View All Projects</span>
+            <ArrowRight size={16} />
+            <UnderlineSquiggle className="absolute -bottom-2 left-0 h-2 w-[85%] text-[var(--color-accent)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+          </button>
         </div>
 
-        <div className="projects-filter">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              className={`filter-pill ${filter === cat ? 'active' : ''}`}
-              onClick={() => setFilter(cat)}
-            >
-              {cat}
-            </button>
+        {/* Project Cards Grid */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {projectsData.map((project, idx) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              index={idx}
+              onOpen={setSelectedProject}
+            />
           ))}
-        </div>
+        </motion.div>
+      </div>
 
-        <div className="projects-grid">
-          {filteredProjects.map((project) => (
-            <div key={project.id} className="project-card glass-panel">
-              <div className="project-header">
-                <span className="project-category">{project.category}</span>
-                <div className="project-links">
-                  <a
-                    href={project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="icon-link"
-                    title="View Source on GitHub"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                    </svg>
-                  </a>
-                  {project.demo !== '#' && (
-                    <a
-                      href={project.demo}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="icon-link"
-                      title="Live Demo"
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        <polyline points="15 3 21 3 21 9"></polyline>
-                        <line x1="10" y1="14" x2="21" y2="3"></line>
-                      </svg>
-                    </a>
-                  )}
-                </div>
+      {/* Modal: Single Project Details */}
+      <AnimatePresence>
+        {selectedProject && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
+            onClick={() => setSelectedProject(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              data-lenis-prevent="true"
+              className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl border-2 border-dashed border-[rgba(245,244,252,0.2)] bg-[var(--color-canvas-raised)] p-6 shadow-[8px_10px_0_0_oklch(0.10_0.03_290)] sm:p-8"
+            >
+              <WashiTape
+                color={`var(${selectedProject.accent})`}
+                className="absolute -top-3 left-8 z-10"
+              />
+              <Starburst className="pointer-events-none absolute -right-3 -top-3 h-9 w-9 text-[var(--color-accent)]" />
+
+              <button
+                type="button"
+                data-cursor="grow"
+                onClick={() => setSelectedProject(null)}
+                aria-label="Close project modal"
+                className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-canvas)] text-[var(--color-ink)] transition-transform hover:scale-110"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="overflow-hidden rounded-2xl bg-black">
+                <img
+                  src={selectedProject.img}
+                  alt={`${selectedProject.title} full artwork`}
+                  className="aspect-square w-full object-cover"
+                />
               </div>
 
-              <h3 className="project-title">{project.title}</h3>
-              <p className="project-desc">{project.description}</p>
+              <span
+                className="mt-4 inline-block rounded-full px-3 py-1 text-xs font-bold text-[var(--color-canvas)]"
+                style={{ backgroundColor: `var(${selectedProject.accent})` }}
+              >
+                {selectedProject.tag}
+              </span>
 
-              <div className="project-tech-tags">
-                {project.tech.map((t, idx) => (
-                  <span key={idx} className="tech-tag">{t}</span>
+              <h3 className="relative mt-3 inline-block font-display text-2xl font-extrabold tracking-tight text-[var(--color-ink)]">
+                {selectedProject.title}
+                <UnderlineSquiggle className="absolute -bottom-2 left-0 h-2 w-full text-[var(--color-accent)]" />
+              </h3>
+
+              <p className="mt-5 text-[rgba(245,244,252,0.85)] leading-relaxed">
+                {selectedProject.description}
+              </p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: View All Projects Drawer */}
+      <AnimatePresence>
+        {showAllModal && !selectedProject && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
+            onClick={() => setShowAllModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              data-lenis-prevent="true"
+              className="relative max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-3xl border-2 border-dashed border-[rgba(245,244,252,0.2)] bg-[var(--color-canvas-raised)] p-6 shadow-[8px_10px_0_0_oklch(0.10_0.03_290)] sm:p-8"
+            >
+              <WashiTape
+                color="var(--color-accent)"
+                className="absolute -top-3 left-8 z-10"
+              />
+              <Starburst className="pointer-events-none absolute -right-3 -top-3 h-9 w-9 text-[var(--color-accent)]" />
+
+              <button
+                type="button"
+                data-cursor="grow"
+                onClick={() => setShowAllModal(false)}
+                aria-label="Close all projects"
+                className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-canvas)] text-[var(--color-ink)] transition-transform hover:scale-110"
+              >
+                <X size={16} />
+              </button>
+
+              <p className="font-display text-sm font-extrabold uppercase tracking-widest text-[var(--color-accent)]">
+                ◉ All Projects
+              </p>
+              <h3 className="relative mt-2 inline-block font-display text-2xl font-extrabold tracking-tight text-[var(--color-ink)] md:text-3xl">
+                Everything I’ve shipped so far
+                <UnderlineSquiggle className="absolute -bottom-2 left-0 h-2 w-full text-[var(--color-accent)]" />
+              </h3>
+
+              <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {projectsData.map((project, idx) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    index={idx}
+                    onOpen={setSelectedProject}
+                  />
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
